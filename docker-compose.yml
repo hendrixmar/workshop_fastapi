@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+
+  web:
+    build: ./project
+    command: uvicorn main:app --reload --workers 2 --host 0.0.0.0 --port 8000
+    volumes:
+      - ./project:/project
+    ports:
+      - "8004:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/foo
+      - PORT=8000
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13.4
+    ports:
+      - "6543:5432"
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=foo
